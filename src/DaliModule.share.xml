@@ -36,6 +36,8 @@
                   <Enumeration Text="DT6 - LED" Value="7" Id="%ENID%" op:headerName="DT6" />
                   <Enumeration Text="DT7 - Schaltrelais" Value="8" Id="%ENID%" op:headerName="DT7" />
                   <Enumeration Text="DT8 - Farbe" Value="9" Id="%ENID%" op:headerName="DT8" />
+                  <Enumeration Text="Virtuell TunableWhite (2x DT6)" Value="10" Id="%ENID%" op:headerName="virtualTW" />
+                  <Enumeration Text="Virtuell: Slave-Kanal" Value="11" Id="%ENID%" op:headerName="virtualSlave" />
                 </TypeRestriction>
               </ParameterType>
               <ParameterType Id="%AID%_PT-name30" Name="name30">
@@ -119,6 +121,74 @@
                   <Enumeration Text="RGB" Value="1" Id="%ENID%" />
                   <Enumeration Text="TW" Value="2" Id="%ENID%" />
                   <Enumeration Text="xyY / xy" Value="3" Id="%ENID%" op:headerName="XYY" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-daliAddress" Name="daliAddress">
+                <TypeRestriction Base="Value" SizeInBit="6" UIHint="DropDown">
+                  <Enumeration Text="A0" Value="0" Id="%ENID%" />
+                  <Enumeration Text="A1" Value="1" Id="%ENID%" />
+                  <Enumeration Text="A2" Value="2" Id="%ENID%" />
+                  <Enumeration Text="A3" Value="3" Id="%ENID%" />
+                  <Enumeration Text="A4" Value="4" Id="%ENID%" />
+                  <Enumeration Text="A5" Value="5" Id="%ENID%" />
+                  <Enumeration Text="A6" Value="6" Id="%ENID%" />
+                  <Enumeration Text="A7" Value="7" Id="%ENID%" />
+                  <Enumeration Text="A8" Value="8" Id="%ENID%" />
+                  <Enumeration Text="A9" Value="9" Id="%ENID%" />
+                  <Enumeration Text="A10" Value="10" Id="%ENID%" />
+                  <Enumeration Text="A11" Value="11" Id="%ENID%" />
+                  <Enumeration Text="A12" Value="12" Id="%ENID%" />
+                  <Enumeration Text="A13" Value="13" Id="%ENID%" />
+                  <Enumeration Text="A14" Value="14" Id="%ENID%" />
+                  <Enumeration Text="A15" Value="15" Id="%ENID%" />
+                  <Enumeration Text="A16" Value="16" Id="%ENID%" />
+                  <Enumeration Text="A17" Value="17" Id="%ENID%" />
+                  <Enumeration Text="A18" Value="18" Id="%ENID%" />
+                  <Enumeration Text="A19" Value="19" Id="%ENID%" />
+                  <Enumeration Text="A20" Value="20" Id="%ENID%" />
+                  <Enumeration Text="A21" Value="21" Id="%ENID%" />
+                  <Enumeration Text="A22" Value="22" Id="%ENID%" />
+                  <Enumeration Text="A23" Value="23" Id="%ENID%" />
+                  <Enumeration Text="A24" Value="24" Id="%ENID%" />
+                  <Enumeration Text="A25" Value="25" Id="%ENID%" />
+                  <Enumeration Text="A26" Value="26" Id="%ENID%" />
+                  <Enumeration Text="A27" Value="27" Id="%ENID%" />
+                  <Enumeration Text="A28" Value="28" Id="%ENID%" />
+                  <Enumeration Text="A29" Value="29" Id="%ENID%" />
+                  <Enumeration Text="A30" Value="30" Id="%ENID%" />
+                  <Enumeration Text="A31" Value="31" Id="%ENID%" />
+                  <Enumeration Text="A32" Value="32" Id="%ENID%" />
+                  <Enumeration Text="A33" Value="33" Id="%ENID%" />
+                  <Enumeration Text="A34" Value="34" Id="%ENID%" />
+                  <Enumeration Text="A35" Value="35" Id="%ENID%" />
+                  <Enumeration Text="A36" Value="36" Id="%ENID%" />
+                  <Enumeration Text="A37" Value="37" Id="%ENID%" />
+                  <Enumeration Text="A38" Value="38" Id="%ENID%" />
+                  <Enumeration Text="A39" Value="39" Id="%ENID%" />
+                  <Enumeration Text="A40" Value="40" Id="%ENID%" />
+                  <Enumeration Text="A41" Value="41" Id="%ENID%" />
+                  <Enumeration Text="A42" Value="42" Id="%ENID%" />
+                  <Enumeration Text="A43" Value="43" Id="%ENID%" />
+                  <Enumeration Text="A44" Value="44" Id="%ENID%" />
+                  <Enumeration Text="A45" Value="45" Id="%ENID%" />
+                  <Enumeration Text="A46" Value="46" Id="%ENID%" />
+                  <Enumeration Text="A47" Value="47" Id="%ENID%" />
+                  <Enumeration Text="A48" Value="48" Id="%ENID%" />
+                  <Enumeration Text="A49" Value="49" Id="%ENID%" />
+                  <Enumeration Text="A50" Value="50" Id="%ENID%" />
+                  <Enumeration Text="A51" Value="51" Id="%ENID%" />
+                  <Enumeration Text="A52" Value="52" Id="%ENID%" />
+                  <Enumeration Text="A53" Value="53" Id="%ENID%" />
+                  <Enumeration Text="A54" Value="54" Id="%ENID%" />
+                  <Enumeration Text="A55" Value="55" Id="%ENID%" />
+                  <Enumeration Text="A56" Value="56" Id="%ENID%" />
+                  <Enumeration Text="A57" Value="57" Id="%ENID%" />
+                  <Enumeration Text="A58" Value="58" Id="%ENID%" />
+                  <Enumeration Text="A59" Value="59" Id="%ENID%" />
+                  <Enumeration Text="A60" Value="60" Id="%ENID%" />
+                  <Enumeration Text="A61" Value="61" Id="%ENID%" />
+                  <Enumeration Text="A62" Value="62" Id="%ENID%" />
+                  <Enumeration Text="A63" Value="63" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
               <ParameterType Id="%AID%_PT-colorSpace" Name="colorSpace" op:headerExport="define">

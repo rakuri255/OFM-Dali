@@ -3,7 +3,11 @@
 
 DaliChannel::DaliChannel(Dali::Master &_daliMaster) : daliMaster(_daliMaster) {}
 
-DaliChannel::~DaliChannel() {}
+DaliChannel::~DaliChannel()
+{
+    delete _output;
+    _output = nullptr;
+}
 
 const std::string DaliChannel::name()
 {
@@ -49,6 +53,7 @@ void DaliChannel::setup()
         if (!_isConfigured)
             return;
 
+        _output = new StandardDaliOutput(daliMaster, _channelIndex, true);
         _isStaircase = ParamDGWG_type;
         _min = 0;
         _max = 100;
@@ -66,24 +71,44 @@ void DaliChannel::setup()
     }
     else
     {
-        _isConfigured = ParamDGW_deviceType != PT_deviceType_none;
+        _isConfigured = ParamDGW_deviceType != PT_deviceType_none &&
+                         ParamDGW_deviceType != PT_deviceType_virtualSlave;
         if (!_isConfigured)
             return;
 
         _isStaircase = ParamDGW_type;
-        _min = ParamDGW_min;
-        _max = ParamDGW_max;
         if (_isStaircase)
             interval = ParamDGW_stairtime;
         _onDay = DaliHelper::percentToArc((float)ParamDGW_onDay);
         _onNight = DaliHelper::percentToArc((float)ParamDGW_onNight);
-        _getError = ParamDGW_error;
         _queryInterval = ParamDGW_queryTime;
         _dimmStatusInterval = ParamDGW_dimmStateInterval;
-        if(ParamDGW_hcl)
+        if (ParamDGW_hcl)
         {
             _hclCurve = ParamDGW_hclCurve;
             _hclIsAlsoOn = ParamDGW_hclStart;
+        }
+
+        if (ParamDGW_deviceType == PT_deviceType_virtualTW)
+        {
+            // Two DT6 lamps mixed as TunableWhite
+            const uint8_t  secondAddr = ParamDGW_vtwSecondAddress;
+            const bool     wwFirst    = ParamDGW_vtwWwFirst;
+            const uint8_t  wwAddr     = wwFirst ? _channelIndex : secondAddr;
+            const uint8_t  cwAddr     = wwFirst ? secondAddr    : _channelIndex;
+            _output = new VirtualTWOutput(daliMaster, wwAddr, cwAddr,
+                                          ParamDGW_tempMin, ParamDGW_tempMax);
+            _min = 0;
+            _max = 100;
+            logDebugP("VirtualDT8: WW[%i] CW[%i] TempMin=%i TempMax=%i",
+                      wwAddr, cwAddr, ParamDGW_tempMin, ParamDGW_tempMax);
+        }
+        else
+        {
+            _output  = new StandardDaliOutput(daliMaster, _channelIndex, false);
+            _min     = ParamDGW_min;
+            _max     = ParamDGW_max;
+            _getError = ParamDGW_error;
         }
     }
     _min = DaliHelper::percentToArc(_min);
@@ -119,7 +144,7 @@ void DaliChannel::loopStaircase()
         {
             logDebugP("Time expired");
             currentState = false;
-            daliMaster.sendArc(_channelIndex, 0x00, _isGroup);
+            if (_output) _output->sendOff();
             setSwitchState(false);
         }
     }
@@ -135,8 +160,8 @@ void DaliChannel::loopDimming()
             {
                 if (currentDimmType == DimmType::Brigthness)
                 {
-                    queryActualLevel();
-                    daliMaster.sendCommand(_channelIndex, Dali::Command::UP, _isGroup);
+                    if (_output && _output->supportsQueryLevel()) queryActualLevel();
+                    if (_output) _output->sendDimCommand(true);
                 }
 
                 *currentDimmValue = *currentDimmValue + 1;
@@ -144,20 +169,28 @@ void DaliChannel::loopDimming()
                 {
                     logDebugP("Dimm Stop at 254");
                     _dimmDirection = DimmDirection::None;
+                    if (_output && currentDimmType == DimmType::Brigthness)
+                        _output->onBrightnessDimStep(*currentDimmValue);
                     updateCurrentDimmValue();
                 }else if (*currentDimmValue >= _max)
                 {
                     logDebugP("Dimm Stop at max %i (%i)", _max, *currentDimmValue);
                     _dimmDirection = DimmDirection::None;
+                    if (_output && currentDimmType == DimmType::Brigthness)
+                        _output->onBrightnessDimStep(*currentDimmValue);
                     updateCurrentDimmValue();
+                }
+                else if (_output && currentDimmType == DimmType::Brigthness)
+                {
+                    _output->onBrightnessDimStep(*currentDimmValue);
                 }
             }
             else if (_dimmDirection == DimmDirection::Down)
             {
                 if (currentDimmType == DimmType::Brigthness)
                 {
-                    queryActualLevel();
-                    daliMaster.sendCommand(_channelIndex, Dali::Command::DOWN, _isGroup);
+                    if (_output && _output->supportsQueryLevel()) queryActualLevel();
+                    if (_output) _output->sendDimCommand(false);
                 }
 
                 *currentDimmValue = *currentDimmValue - 1;
@@ -169,8 +202,12 @@ void DaliChannel::loopDimming()
                         _dimmDirection = DimmDirection::None;
                     } else {
                         logDebugP("Turn off device");
-                        daliMaster.sendCommand(_channelIndex, Dali::Command::OFF, _isGroup);
+                        if (_output) _output->sendDimOffCommand();
                     }
+                }
+                else if (_output && currentDimmType == DimmType::Brigthness)
+                {
+                    _output->onBrightnessDimStep(*currentDimmValue);
                 }
             }
             
@@ -382,7 +419,8 @@ void DaliChannel::koHandleScene(GroupObject &ko)
         return;
     }
 
-    daliMaster.sendCommand(_channelIndex, Dali::Command::GO_TO_SCENE | number, _isGroup);
+    if (_output)
+        _output->sendScene(number);
 }
 
 void DaliChannel::koHandleColorRel(GroupObject &ko, ColorChannel channel)
@@ -487,7 +525,7 @@ void DaliChannel::handleSwitchNormal(GroupObject &ko)
         if(!hclBriActivated) {
             logDebugP(isNight ? "Turning on night value" : "Turning on day value");
         }
-        daliMaster.sendArc(_channelIndex, onValue, _isGroup);
+        if (_output) _output->sendArc(onValue);
 
         bool hclTempActivated = false;
         if(_hclCurve != HclDisabled && _hclIsAutoMode)
@@ -504,8 +542,8 @@ void DaliChannel::handleSwitchNormal(GroupObject &ko)
     }
     else
     {
-        logDebugP("Turning off");
-        daliMaster.sendArc(_channelIndex, 0x00, _isGroup);
+        logDebugP("Ausschalten");
+        if (_output) _output->sendOff();
         setSwitchState(false);
     }
     currentState = value;
@@ -542,7 +580,7 @@ void DaliChannel::handleSwitchStaircase(GroupObject &ko)
         } else {
             logDebugP(isNight ? "Turning on night value" : "Turning on day value");
         }
-        daliMaster.sendArc(_channelIndex, onValue, _isGroup);
+        if (_output) _output->sendArc(onValue);
         if(_hclCurve != HclDisabled && _hclIsAutoMode)
             setTemperature(_hclCurrentTemp);
         setDimmState(DaliHelper::percentToArc(onValue));
@@ -556,8 +594,8 @@ void DaliChannel::handleSwitchStaircase(GroupObject &ko)
             return;
         }
 
-        logDebugP("Turning off");
-        daliMaster.sendArc(_channelIndex, 0x00, _isGroup);
+        logDebugP("Ausschalten");
+        if (_output) _output->sendOff();
         setSwitchState(false);
         currentState = false;
     }
@@ -602,10 +640,11 @@ void DaliChannel::koHandleDimmRel(GroupObject &ko)
             }
             else 
             {
-                daliMaster.sendCommand(_channelIndex, Dali::Command::RECALL_MIN, _isGroup, true);
+                if (_output) _output->recallMin(_min);
                 *currentDimmValue = _min;
                 currentState = true;
-                queryActualLevel();
+                if (_output && _output->supportsQueryLevel())
+                    queryActualLevel();
                 logDebugP("starting with min %i", _min);
                 _dimmLast = millis();
             }
@@ -633,7 +672,7 @@ void DaliChannel::koHandleDimmAbs(GroupObject &ko)
     uint8_t value = ko.value(Dpt(5, 1));
     logDebugP("Dimming absolute to %i%%", value);
     uint8_t arc = DaliHelper::percentToArc(value);
-    daliMaster.sendArc(_channelIndex, arc, _isGroup);
+    if (_output) _output->sendArc(arc);
     setDimmState(arc, true, true);
 }
 
@@ -701,7 +740,7 @@ void DaliChannel::koHandleLock(GroupObject &ko)
     }
     }
     logDebugP("%i - %i", behavevalue, DaliHelper::percentToArc(behavevalue));
-    daliMaster.sendArc(_channelIndex, behavevalue, _isGroup);
+    if (_output) _output->sendArc(behavevalue);
     setDimmState(DaliHelper::percentToArc(behavevalue));
 }
 
@@ -720,6 +759,7 @@ void DaliChannel::koHandleColor(GroupObject &ko)
     logDebugP("AutoConf %i %i %i", _isGroup, _isGroup ? ParamDGWG_hcl_manu_col : ParamDGW_hcl_manu_col, _hclIsAutoMode);
 
     uint8_t colorType = _isGroup ? ParamDGWG_colorType : ParamDGW_colorType;
+    if (_output && _output->isTunableWhiteMode()) colorType = PT_colorType_TW;
 
     switch(colorType)
     {
@@ -830,19 +870,14 @@ void DaliChannel::sendKoStateOnChange(uint16_t koNr, const KNXValue &value, cons
 void DaliChannel::setTemperature(uint16_t value)
 {
     logDebugP("Set Kelvin: %i K", value);
-    uint16_t mirek = 1000000.0 / value;
-    //TODO check the colorType and then set RGB or TW or do nothing if it is no color Device
-    daliMaster.sendSpecialCommand(Dali::SpecialCommand::SET_DTR, mirek & 0xFF);
-    daliMaster.sendSpecialCommand(Dali::SpecialCommand::SET_DTR1, (mirek >> 8) & 0xFF);
-    daliMaster.sendExtendedCommand(_channelIndex, 0x08, Dali::ExtendedCommandDT8::SET_TEMP_COLOUR_TEMPERATURE, _isGroup);
-    daliMaster.sendExtendedCommand(_channelIndex, 0x08, Dali::ExtendedCommandDT8::ACTIVATE, _isGroup);
+    if (_output) _output->setTemperature(value);
     sendKoStateOnChange(DGW_Kocolor_rgb_state, value, Dpt(7, 600));
 }
 
 void DaliChannel::setBrightness(uint8_t value)
 {
     logDebugP("Set Brightness: %i %%", value);
-    daliMaster.sendArc(_channelIndex, DaliHelper::percentToArc(value), _isGroup);
+    if (_output) _output->sendArc(DaliHelper::percentToArc(value));
     sendKoStateOnChange(DGW_Kodimm_state, value, Dpt(5, 1));
 }
 

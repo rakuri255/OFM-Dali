@@ -186,6 +186,12 @@
               <Memory CodeSegment="%AID%_RS-04-00000" Offset="21" BitOffset="4" />
               </Parameter>
               <Parameter Id="%AID%_P-%T%2%CC%131" Name="%C%scene" ParameterType="%AID%_PT-noyes" Text="Szenenobjekt" Value="0" />
+              <Parameter Id="%AID%_P-%T%2%CC%132" Name="%C%vtwSecondAddress" ParameterType="%AID%_PT-daliAddress" Text="2. DALI-Kurzadresse (CW oder WW)" Value="1">
+              <Memory CodeSegment="%AID%_RS-04-00000" Offset="22" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%T%2%CC%133" Name="%C%vtwWwFirst" ParameterType="%AID%_PT-noyes" Text="Dieser Kanal ist WarmWhite (WW)" Value="1">
+              <Memory CodeSegment="%AID%_RS-04-00000" Offset="22" BitOffset="6" />
+              </Parameter>
             </Parameters>
             <ParameterRefs>
               <ParameterRef RefId="%AID%_P-%T%2%CC%001" Id="%AID%_P-%T%2%CC%001_R-%T%2%CC%00101" Name="%C%deviceType" />
@@ -309,6 +315,8 @@
               <ParameterRef RefId="%AID%_P-%T%2%CC%129" Id="%AID%_P-%T%2%CC%129_R-%T%2%CC%12901" Name="%C%hcl_auto_off" />
               <ParameterRef RefId="%AID%_P-%T%2%CC%130" Id="%AID%_P-%T%2%CC%130_R-%T%2%CC%13001" Name="%C%hcl_auto_day" />
               <ParameterRef RefId="%AID%_P-%T%2%CC%131" Id="%AID%_P-%T%2%CC%131_R-%T%2%CC%13101" Name="%C%scene" />
+              <ParameterRef RefId="%AID%_P-%T%2%CC%132" Id="%AID%_P-%T%2%CC%132_R-%T%2%CC%13201" Name="%C%vtwSecondAddress" />
+              <ParameterRef RefId="%AID%_P-%T%2%CC%133" Id="%AID%_P-%T%2%CC%133_R-%T%2%CC%13301" Name="%C%vtwWwFirst" />
             </ParameterRefs>
             <ComObjectTable>
               <ComObject Id="%AID%_O-%T%2%CC%000" Name="%C%switch" Text="A%C-1% {{0}}" Number="%K0%" FunctionText="Schalten" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
@@ -392,7 +400,15 @@
               </choose>
               <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
               <choose ParamRefId="%AID%_P-%T%2%CC%001_R-%T%2%CC%00101">
+                <when test="11">
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Virtuell: Slave-Kanal" UIHint="Headline" Icon="palette-custom" />
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Dieser Kanal ist als Slave-Kanal eines virtuellen Kanals reserviert. Er wird vom zugehörigen Master-Kanal gesteuert und besitzt keine eigenen Kommunikationsobjekte." UIHint="Information" />
+                </when>
+              </choose>
+              <choose ParamRefId="%AID%_P-%T%2%CC%001_R-%T%2%CC%00101">
                 <when test="!=0">
+                  <choose ParamRefId="%AID%_P-%T%2%CC%001_R-%T%2%CC%00101">
+                    <when test="!=11">
                   <ComObjectRefRef RefId="%AID%_O-%T%2%CC%000_R-%T%2%CC%00001" />
                   <ComObjectRefRef RefId="%AID%_O-%T%2%CC%001_R-%T%2%CC%00101" />
                   <ParameterRefRef RefId="%AID%_P-%T%2%CC%088_R-%T%2%CC%08801" />
@@ -422,7 +438,7 @@
                   <choose ParamRefId="%AID%_P-%T%2%CC%086_R-%T%2%CC%08601">
                     <when test="1">
                       <choose ParamRefId="%AID%_P-%T%2%CC%001_R-%T%2%CC%00101">
-                        <when test="!=9">
+                        <when test="0 1 2 3 4 5 6 7 8">
                           <ParameterSeparator Id="%AID%_PS-nnn" Text="Es wird nur die Helligkeit von der HCL-Kurve berücksichtigt." UIHint="Information" />
                         </when>
                       </choose>
@@ -512,6 +528,18 @@
                           </choose>
                         </when>
                       </choose>
+                    </when>
+                  </choose>
+                  <choose ParamRefId="%AID%_P-%T%2%CC%001_R-%T%2%CC%00101">
+                    <when test="=10">
+                      <ParameterSeparator Id="%AID%_PS-nnn" Text="Virtuell TunableWhite (2x DT6)" UIHint="Headline" Icon="palette-custom" />
+                      <ParameterSeparator Id="%AID%_PS-nnn" Text="Dieser Kanal steuert zwei DT6-Lampen als TunableWhite-Paar. Den 2. Kanal auf Gerätetyp 'Virtuell: Slave-Kanal' setzen." UIHint="Information" />
+                      <ParameterRefRef RefId="%AID%_P-%T%2%CC%133_R-%T%2%CC%13301" />
+                      <ParameterRefRef RefId="%AID%_P-%T%2%CC%132_R-%T%2%CC%13201" />
+                      <ParameterRefRef RefId="%AID%_P-%T%2%CC%084_R-%T%2%CC%08401" />
+                      <ParameterRefRef RefId="%AID%_P-%T%2%CC%085_R-%T%2%CC%08501" />
+                      <ComObjectRefRef RefId="%AID%_O-%T%2%CC%006_R-%T%2%CC%00603" />
+                      <ComObjectRefRef RefId="%AID%_O-%T%2%CC%007_R-%T%2%CC%00703" />
                     </when>
                   </choose>
                   <choose ParamRefId="%AID%_P-4100008_R-410000801">
@@ -1008,6 +1036,8 @@
                         <ParameterRefRef RefId="%AID%_P-%T%2%CC%130_R-%T%2%CC%13001" />
                         <ComObjectRefRef RefId="%AID%_O-%T%2%CC%017_R-%T%2%CC%01701" />
                       </ParameterBlock>
+                    </when>
+                  </choose>
                     </when>
                   </choose>
                 </when>

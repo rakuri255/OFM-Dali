@@ -6,6 +6,9 @@
 #include "colorhelper.h"
 #include "DaliHelper.h"
 #include "DaliConstants.h"
+#include "IDaliOutput.h"
+#include "StandardDaliOutput.h"
+#include "VirtualTWOutput.h"
 
 #define DimmInterval 200
 #define DimmStatusInterval 500
@@ -120,6 +123,8 @@ class DaliChannel : public OpenKNX::Channel
 
 		//Group membership
 		uint16_t _groups = 0;
+
+		IDaliOutput* _output = nullptr;
 
 		void loopError();
 		void loopDimming();
