@@ -606,6 +606,9 @@
               <Message Id="%AID%_M-%TT%00025" Name="evgWriteScene" Text="Übertrage Szene " />
             </Messages>
             <Script>
+              <op:include href="DaliGtinData.script.js" prefix="GTIN" type="script" />
+            </Script>
+            <Script>
               <op:include href="DaliModule.script.js" prefix="DGW" type="script" />
             </Script>
           </Static>
