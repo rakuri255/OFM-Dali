@@ -81,7 +81,6 @@ void DaliChannel::setup()
             interval = ParamDGW_stairtime;
         _onDay = DaliHelper::percentToArc((float)ParamDGW_onDay);
         _onNight = DaliHelper::percentToArc((float)ParamDGW_onNight);
-        _queryInterval = ParamDGW_queryTime;
         _dimmStatusInterval = ParamDGW_dimmStateInterval;
         if (ParamDGW_hcl)
         {
@@ -109,6 +108,8 @@ void DaliChannel::setup()
             _min     = ParamDGW_min;
             _max     = ParamDGW_max;
             _getError = ParamDGW_error;
+            // Byte teilt sich den Speicher mit den Virtual-TW-Parametern
+            _queryInterval = ParamDGW_queryTime;
         }
     }
     _min = DaliHelper::percentToArc(_min);

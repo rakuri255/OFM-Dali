@@ -11,7 +11,7 @@
  *   - Cold-White (CW) lamp at cwAddress
  *
  * TW mixing formula (constant luminous-flux):
- *   ratio = clamp((T_kelvin - T_ww) / (T_cw - T_ww),  0, 1)
+ *   ratio = clamp((M_ww - M) / (M_ww - M_cw),  0, 1)   with M = 1e6 / T_kelvin (mirek)
  *   WW_arc = percentToArc( arcToPercent(brightness) * (1 - ratio) )
  *   CW_arc = percentToArc( arcToPercent(brightness) *      ratio  )
  *
@@ -86,10 +86,13 @@ private:
     void _applyTW()
     {
         float ratio = 0.5f;
-        if (_tempMax > _tempMin)
+        if (_tempMax > _tempMin && _tempMin > 0 && _currentTemp > 0)
         {
-            ratio = (static_cast<float>(_currentTemp) - static_cast<float>(_tempMin))
-                / (static_cast<float>(_tempMax) - static_cast<float>(_tempMin));
+            // Interpolate in mirek like a DT8 ballast does, not linear in Kelvin
+            const float mWw  = 1000000.0f / _tempMin;
+            const float mCw  = 1000000.0f / _tempMax;
+            const float mCur = 1000000.0f / _currentTemp;
+            ratio = (mWw - mCur) / (mWw - mCw);
             if (ratio < 0.0f) ratio = 0.0f;
             if (ratio > 1.0f) ratio = 1.0f;
         }
